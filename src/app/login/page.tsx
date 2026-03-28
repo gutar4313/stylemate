@@ -3,8 +3,8 @@
 import { HiSparkles } from "react-icons/hi2";
 
 export default function LoginPage() {
-  const handleKakaoLogin = () => {
-    window.location.href = "/api/auth/signin/kakao";
+  const handleNaverLogin = () => {
+    window.location.href = "/api/auth/signin/naver";
   };
 
   return (
@@ -17,19 +17,17 @@ export default function LoginPage() {
           <p className="mt-2 text-sm text-gray-500">AI가 추천하는 나만의 코디</p>
         </div>
 
-        {/* 카카오 로그인 */}
+        {/* 네이버 로그인 */}
         <button
-          onClick={handleKakaoLogin}
-          className="flex w-full items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-medium transition-colors"
-          style={{ backgroundColor: "#FEE500", color: "#191919" }}
+          onClick={handleNaverLogin}
+          className="flex w-full items-center justify-center gap-3 rounded-xl py-3.5 text-sm font-bold transition-colors hover:opacity-90"
+          style={{ backgroundColor: "#03C75A", color: "#FFFFFF" }}
         >
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-            <path
-              d="M9 1C4.58 1 1 3.87 1 7.36c0 2.27 1.47 4.26 3.68 5.37-.16.57-.59 2.06-.67 2.38-.1.39.14.39.3.28.12-.08 1.93-1.31 2.7-1.84.63.09 1.29.14 1.99.14 4.42 0 8-2.87 8-6.33S13.42 1 9 1z"
-              fill="#191919"
-            />
+          {/* 네이버 N 로고 */}
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M16.273 12.845L7.376 0H0v24h7.727V11.155L16.624 24H24V0h-7.727z" fill="white" />
           </svg>
-          카카오로 시작하기
+          네이버로 시작하기
         </button>
 
         <p className="text-xs text-gray-400">
