@@ -3,6 +3,8 @@
 import { useState } from "react";
 import ImageUploader from "@/components/ImageUploader";
 import OutfitCard from "@/components/OutfitCard";
+import LoginPrompt from "@/components/LoginPrompt";
+import { useSession } from "@/hooks/useSession";
 import { IoSearchOutline } from "react-icons/io5";
 
 interface SearchResult {
@@ -27,6 +29,7 @@ interface SearchResult {
 }
 
 export default function SearchPage() {
+  const { isLoggedIn, loading: sessionLoading } = useSession();
   const [searchImage, setSearchImage] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<SearchResult[] | null>(null);
@@ -72,6 +75,10 @@ export default function SearchPage() {
         <h1 className="text-xl font-bold text-gray-900">사진으로 코디 검색</h1>
         <p className="text-sm text-gray-500">사진을 찍어서 비슷한 코디를 찾아보세요</p>
       </div>
+
+      {!sessionLoading && !isLoggedIn && (
+        <LoginPrompt message="사진 검색을 하려면 로그인이 필요해요" />
+      )}
 
       <ImageUploader onImageSelect={setSearchImage} label="코디 사진 업로드" />
 

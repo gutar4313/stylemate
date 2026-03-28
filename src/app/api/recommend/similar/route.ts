@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { openai } from "@/lib/openai";
+import { getOpenAI } from "@/lib/openai";
 import { prisma } from "@/lib/prisma";
 
 // 저장된 코디 기반 비슷한 스타일 추천
@@ -46,7 +46,7 @@ ${savedSummary}
   ]
 }`;
 
-  const response = await openai.chat.completions.create({
+  const response = await getOpenAI().chat.completions.create({
     model: "gpt-4o-mini",
     messages: [{ role: "user", content: prompt }],
     max_tokens: 1500,

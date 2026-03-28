@@ -1,12 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ImageUploader from "@/components/ImageUploader";
 import StyleSelector from "@/components/StyleSelector";
 import BodyAnalysisResult from "@/components/BodyAnalysisResult";
 import { GENDERS, TOP_SIZES, BOTTOM_SIZES, SHOE_SIZES } from "@/types";
-import { IoSaveOutline } from "react-icons/io5";
-import { IoBodyOutline } from "react-icons/io5";
+import { IoSaveOutline, IoBodyOutline } from "react-icons/io5";
 
 interface BodyAnalysis {
   bodyType: string;
@@ -17,6 +16,7 @@ interface BodyAnalysis {
 
 export default function ProfilePage() {
   const [bodyPhoto, setBodyPhoto] = useState<File | null>(null);
+  const [existingPhotoUrl, setExistingPhotoUrl] = useState<string | null>(null);
   const [gender, setGender] = useState("");
   const [height, setHeight] = useState("");
   const [weight, setWeight] = useState("");
@@ -27,6 +27,40 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [bodyAnalysis, setBodyAnalysis] = useState<BodyAnalysis | null>(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
+  const [bodyTypeText, setBodyTypeText] = useState<string | null>(null);
+
+  // 저장된 프로필 불러오기
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const res = await fetch("/api/profile");
+        if (res.ok) {
+          const data = await res.json();
+          if (data) {
+            setGender(data.gender || "");
+            setHeight(data.height ? String(data.height) : "");
+            setWeight(data.weight ? String(data.weight) : "");
+            setTopSize(data.topSize || "");
+            setBottomSize(data.bottomSize || "");
+            setShoeSize(data.shoeSize || "");
+            setBodyTypeText(data.bodyType || null);
+            if (data.bodyPhotoUrl) {
+              setExistingPhotoUrl(data.bodyPhotoUrl);
+            }
+            if (data.preferences) {
+              setSelectedStyles(data.preferences.map((p: { tag: string }) => p.tag));
+            }
+          }
+        }
+      } catch {
+        // 로그인 안 된 경우 등 무시
+      } finally {
+        setLoadingProfile(false);
+      }
+    };
+    loadProfile();
+  }, []);
 
   const handleSave = async () => {
     setSaving(true);
@@ -48,6 +82,8 @@ export default function ProfilePage() {
 
       if (res.ok) {
         alert("프로필이 저장되었습니다!");
+      } else if (res.status === 401) {
+        alert("로그인이 필요합니다.");
       }
     } catch {
       alert("저장에 실패했습니다. 다시 시도해주세요.");
@@ -79,6 +115,7 @@ export default function ProfilePage() {
       if (res.ok) {
         const data = await res.json();
         setBodyAnalysis(data);
+        setBodyTypeText(data.bodyType);
       } else {
         alert("체형 분석에 실패했습니다.");
       }
@@ -89,6 +126,25 @@ export default function ProfilePage() {
     }
   };
 
+  if (loadingProfile) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-xl font-bold text-gray-900">내 프로필</h1>
+          <p className="text-sm text-gray-500">불러오는 중...</p>
+        </div>
+        <div className="space-y-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="animate-pulse rounded-xl bg-white p-5">
+              <div className="mb-2 h-4 w-1/3 rounded bg-gray-200" />
+              <div className="h-10 w-full rounded bg-gray-100" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -96,8 +152,22 @@ export default function ProfilePage() {
         <p className="text-sm text-gray-500">체형 정보를 입력해주세요</p>
       </div>
 
+      {/* 현재 체형 분석 결과 표시 */}
+      {bodyTypeText && !bodyAnalysis && (
+        <div className="flex items-center gap-3 rounded-xl bg-violet-50 p-4">
+          <IoBodyOutline className="text-2xl text-violet-600" />
+          <div>
+            <p className="text-sm text-gray-500">분석된 체형</p>
+            <p className="font-bold text-violet-700">{bodyTypeText}</p>
+          </div>
+        </div>
+      )}
+
       {/* 전신 사진 */}
-      <ImageUploader onImageSelect={setBodyPhoto} />
+      <ImageUploader
+        onImageSelect={setBodyPhoto}
+        currentImageUrl={existingPhotoUrl}
+      />
 
       {/* AI 체형 분석 버튼 */}
       {bodyPhoto && (

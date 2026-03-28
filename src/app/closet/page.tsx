@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { IoShirtOutline, IoHeart, IoTrashOutline } from "react-icons/io5";
 import { HiSparkles } from "react-icons/hi2";
 import OutfitCard from "@/components/OutfitCard";
+import LoginPrompt from "@/components/LoginPrompt";
+import { useSession } from "@/hooks/useSession";
 
 interface SavedOutfit {
   id: string;
@@ -15,6 +17,7 @@ interface SavedOutfit {
 }
 
 export default function ClosetPage() {
+  const { isLoggedIn, loading: sessionLoading } = useSession();
   const [outfits, setOutfits] = useState<SavedOutfit[]>([]);
   const [loading, setLoading] = useState(true);
   const [similarLoading, setSimilarLoading] = useState(false);
@@ -96,6 +99,10 @@ export default function ClosetPage() {
           {outfits.length > 0 ? `${outfits.length}개의 코디가 저장되어 있어요` : "저장한 코디를 확인하세요"}
         </p>
       </div>
+
+      {!sessionLoading && !isLoggedIn && (
+        <LoginPrompt message="옷장을 사용하려면 로그인이 필요해요" />
+      )}
 
       {outfits.length === 0 ? (
         <div className="rounded-xl border border-gray-100 bg-white p-10 text-center">

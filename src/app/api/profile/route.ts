@@ -10,6 +10,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "로그인이 필요합니다" }, { status: 401 });
   }
 
+  const userId = session.user.id;
   const formData = await request.formData();
   const bodyPhoto = formData.get("bodyPhoto") as File | null;
   const gender = formData.get("gender") as string;
@@ -27,7 +28,7 @@ export async function POST(request: NextRequest) {
     const uploadsDir = path.join(process.cwd(), "public", "uploads");
     await mkdir(uploadsDir, { recursive: true });
     const ext = bodyPhoto.name.split(".").pop();
-    const filename = `${session.user.id}-body.${ext}`;
+    const filename = `${userId}-body.${ext}`;
     const filepath = path.join(uploadsDir, filename);
     const bytes = await bodyPhoto.arrayBuffer();
     await writeFile(filepath, Buffer.from(bytes));
@@ -36,7 +37,7 @@ export async function POST(request: NextRequest) {
 
   // 프로필 업데이트
   await prisma.user.update({
-    where: { id: session.user.id },
+    where: { id: userId },
     data: {
       gender,
       height: height ? parseFloat(height) : null,
@@ -51,11 +52,11 @@ export async function POST(request: NextRequest) {
   // 스타일 선호도 업데이트
   if (styles.length > 0) {
     await prisma.stylePreference.deleteMany({
-      where: { userId: session.user.id },
+      where: { userId: userId },
     });
     await prisma.stylePreference.createMany({
       data: styles.map((tag: string) => ({
-        userId: session.user.id,
+        userId: userId,
         tag,
         score: 1.0,
       })),

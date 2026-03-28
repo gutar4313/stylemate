@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { openai } from "@/lib/openai";
+import { getOpenAI } from "@/lib/openai";
 import { prisma } from "@/lib/prisma";
 import { buildRecommendPrompt } from "@/lib/prompts";
 import { searchNaverShopping, cleanHtml } from "@/lib/naver-shopping";
@@ -33,7 +33,7 @@ export async function GET() {
       styles: user.preferences.map((p) => p.tag),
     });
 
-    const response = await openai.chat.completions.create({
+    const response = await getOpenAI().chat.completions.create({
       model: "gpt-4o",
       messages: [{ role: "user", content: prompt }],
       max_tokens: 2000,

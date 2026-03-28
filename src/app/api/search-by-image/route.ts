@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { openai } from "@/lib/openai";
+import { getOpenAI } from "@/lib/openai";
 import { IMAGE_SEARCH_PROMPT } from "@/lib/prompts";
 import { searchNaverShopping, cleanHtml } from "@/lib/naver-shopping";
 
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     const mimeType = image.type || "image/jpeg";
 
     // GPT-4o Vision으로 이미지 분석
-    const response = await openai.chat.completions.create({
+    const response = await getOpenAI().chat.completions.create({
       model: "gpt-4o",
       messages: [
         {
