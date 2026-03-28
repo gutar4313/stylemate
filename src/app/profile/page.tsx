@@ -3,8 +3,17 @@
 import { useState } from "react";
 import ImageUploader from "@/components/ImageUploader";
 import StyleSelector from "@/components/StyleSelector";
+import BodyAnalysisResult from "@/components/BodyAnalysisResult";
 import { GENDERS, TOP_SIZES, BOTTOM_SIZES, SHOE_SIZES } from "@/types";
 import { IoSaveOutline } from "react-icons/io5";
+import { IoBodyOutline } from "react-icons/io5";
+
+interface BodyAnalysis {
+  bodyType: string;
+  characteristics: string[];
+  fashionTips: string[];
+  avoidItems: string[];
+}
 
 export default function ProfilePage() {
   const [bodyPhoto, setBodyPhoto] = useState<File | null>(null);
@@ -16,6 +25,8 @@ export default function ProfilePage() {
   const [shoeSize, setShoeSize] = useState("");
   const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [bodyAnalysis, setBodyAnalysis] = useState<BodyAnalysis | null>(null);
 
   const handleSave = async () => {
     setSaving(true);
@@ -45,6 +56,39 @@ export default function ProfilePage() {
     }
   };
 
+  const handleBodyAnalysis = async () => {
+    if (!bodyPhoto) {
+      alert("전신 사진을 먼저 업로드해주세요.");
+      return;
+    }
+    setAnalyzing(true);
+    try {
+      const formData = new FormData();
+      formData.append("image", bodyPhoto);
+
+      const res = await fetch("/api/analyze-body", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (res.status === 401) {
+        alert("로그인이 필요합니다.");
+        return;
+      }
+
+      if (res.ok) {
+        const data = await res.json();
+        setBodyAnalysis(data);
+      } else {
+        alert("체형 분석에 실패했습니다.");
+      }
+    } catch {
+      alert("분석 중 오류가 발생했습니다.");
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -54,6 +98,21 @@ export default function ProfilePage() {
 
       {/* 전신 사진 */}
       <ImageUploader onImageSelect={setBodyPhoto} />
+
+      {/* AI 체형 분석 버튼 */}
+      {bodyPhoto && (
+        <button
+          onClick={handleBodyAnalysis}
+          disabled={analyzing}
+          className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-violet-500 bg-violet-50 py-3 text-sm font-medium text-violet-700 transition-colors hover:bg-violet-100 disabled:border-gray-300 disabled:bg-gray-50 disabled:text-gray-400"
+        >
+          <IoBodyOutline className="text-lg" />
+          {analyzing ? "AI가 체형 분석 중... (10~20초)" : "AI 체형 분석하기"}
+        </button>
+      )}
+
+      {/* 체형 분석 결과 */}
+      {bodyAnalysis && <BodyAnalysisResult analysis={bodyAnalysis} />}
 
       {/* 성별 */}
       <div>

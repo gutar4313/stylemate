@@ -2,29 +2,54 @@
 
 import { useState } from "react";
 import { HiSparkles } from "react-icons/hi2";
-import { IoHeartOutline } from "react-icons/io5";
 import Link from "next/link";
+import OutfitCard from "@/components/OutfitCard";
+
+interface RecommendItem {
+  name: string;
+  category: string;
+  color?: string;
+  fit?: string;
+  products?: Array<{
+    title: string;
+    image: string;
+    price: number;
+    link: string;
+    mall: string;
+  }>;
+}
+
+interface Recommendation {
+  id: string;
+  title: string;
+  description: string;
+  items: RecommendItem[];
+  tags: string[];
+  occasion?: string;
+}
 
 export default function RecommendPage() {
   const [loading, setLoading] = useState(false);
-  const [recommendations, setRecommendations] = useState<null | Array<{
-    id: string;
-    title: string;
-    description: string;
-    items: Array<{ name: string; category: string }>;
-    tags: string[];
-  }>>(null);
+  const [recommendations, setRecommendations] = useState<Recommendation[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handleRecommend = async () => {
     setLoading(true);
+    setError(null);
     try {
       const res = await fetch("/api/recommend");
-      if (res.ok) {
-        const data = await res.json();
-        setRecommendations(data.recommendations);
+      if (res.status === 401) {
+        setError("로그인이 필요합니다.");
+        return;
       }
+      if (!res.ok) {
+        setError("추천을 가져오는데 실패했습니다.");
+        return;
+      }
+      const data = await res.json();
+      setRecommendations(data.recommendations);
     } catch {
-      alert("추천을 가져오는데 실패했습니다.");
+      setError("네트워크 오류가 발생했습니다.");
     } finally {
       setLoading(false);
     }
@@ -44,11 +69,18 @@ export default function RecommendPage() {
         className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-violet-600 py-4 text-sm font-medium text-white shadow-lg transition-all hover:shadow-xl disabled:from-gray-400 disabled:to-gray-400"
       >
         <HiSparkles className="text-xl" />
-        {loading ? "AI가 분석 중..." : "코디 추천받기"}
+        {loading ? "AI가 분석 중... (10~20초 소요)" : "코디 추천받기"}
       </button>
 
-      {/* 프로필 미완성 알림 */}
-      {!recommendations && !loading && (
+      {/* 에러 */}
+      {error && (
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-center text-sm text-red-600">
+          {error}
+        </div>
+      )}
+
+      {/* 프로필 미완성 안내 */}
+      {!recommendations && !loading && !error && (
         <div className="rounded-xl border border-gray-100 bg-white p-6 text-center">
           <HiSparkles className="mx-auto mb-3 text-4xl text-gray-300" />
           <p className="text-sm text-gray-500">프로필을 먼저 완성하면</p>
@@ -62,14 +94,22 @@ export default function RecommendPage() {
         </div>
       )}
 
-      {/* 로딩 */}
+      {/* 로딩 스켈레톤 */}
       {loading && (
         <div className="space-y-4">
           {[1, 2, 3].map((i) => (
             <div key={i} className="animate-pulse rounded-xl bg-white p-5">
               <div className="mb-3 h-5 w-3/4 rounded bg-gray-200" />
               <div className="mb-2 h-4 w-full rounded bg-gray-100" />
-              <div className="h-4 w-2/3 rounded bg-gray-100" />
+              <div className="mb-4 h-4 w-2/3 rounded bg-gray-100" />
+              <div className="space-y-2">
+                {[1, 2, 3, 4].map((j) => (
+                  <div key={j} className="flex items-center gap-2">
+                    <div className="h-4 w-10 rounded bg-gray-100" />
+                    <div className="h-4 w-32 rounded bg-gray-100" />
+                  </div>
+                ))}
+              </div>
             </div>
           ))}
         </div>
@@ -78,31 +118,17 @@ export default function RecommendPage() {
       {/* 추천 결과 */}
       {recommendations && (
         <div className="space-y-4">
+          <p className="text-sm text-gray-500">{recommendations.length}개의 코디를 추천받았어요</p>
           {recommendations.map((rec) => (
-            <div key={rec.id} className="rounded-xl bg-white p-5 shadow-sm">
-              <div className="mb-2 flex items-start justify-between">
-                <h3 className="font-bold text-gray-900">{rec.title}</h3>
-                <button className="text-xl text-gray-300 transition-colors hover:text-red-500">
-                  <IoHeartOutline />
-                </button>
-              </div>
-              <p className="mb-3 text-sm text-gray-600">{rec.description}</p>
-              <div className="mb-3 space-y-1">
-                {rec.items.map((item, idx) => (
-                  <div key={idx} className="flex items-center gap-2 text-sm text-gray-700">
-                    <span className="text-xs text-gray-400">{item.category}</span>
-                    <span>{item.name}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="flex flex-wrap gap-1">
-                {rec.tags.map((tag) => (
-                  <span key={tag} className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs text-gray-600">
-                    #{tag}
-                  </span>
-                ))}
-              </div>
-            </div>
+            <OutfitCard
+              key={rec.id}
+              id={rec.id}
+              title={rec.title}
+              description={rec.description}
+              items={rec.items}
+              tags={rec.tags}
+              occasion={rec.occasion}
+            />
           ))}
         </div>
       )}

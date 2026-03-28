@@ -2,19 +2,35 @@
 
 import { useState } from "react";
 import ImageUploader from "@/components/ImageUploader";
+import OutfitCard from "@/components/OutfitCard";
 import { IoSearchOutline } from "react-icons/io5";
-import { IoHeartOutline } from "react-icons/io5";
+
+interface SearchResult {
+  id: string;
+  title: string;
+  description: string;
+  tags: string[];
+  items: Array<{
+    name: string;
+    category: string;
+    color?: string;
+    style?: string;
+    material?: string;
+    products?: Array<{
+      title: string;
+      image: string;
+      price: number;
+      link: string;
+      mall: string;
+    }>;
+  }>;
+}
 
 export default function SearchPage() {
   const [searchImage, setSearchImage] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState<null | Array<{
-    id: string;
-    title: string;
-    description: string;
-    tags: string[];
-    items: Array<{ name: string; category: string }>;
-  }>>(null);
+  const [results, setResults] = useState<SearchResult[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSearch = async () => {
     if (!searchImage) {
@@ -22,6 +38,7 @@ export default function SearchPage() {
       return;
     }
     setLoading(true);
+    setError(null);
     try {
       const formData = new FormData();
       formData.append("image", searchImage);
@@ -31,12 +48,19 @@ export default function SearchPage() {
         body: formData,
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        setResults(data.results);
+      if (res.status === 401) {
+        setError("로그인이 필요합니다.");
+        return;
       }
+      if (!res.ok) {
+        setError("검색에 실패했습니다.");
+        return;
+      }
+
+      const data = await res.json();
+      setResults(data.results);
     } catch {
-      alert("검색에 실패했습니다.");
+      setError("네트워크 오류가 발생했습니다.");
     } finally {
       setLoading(false);
     }
@@ -49,23 +73,23 @@ export default function SearchPage() {
         <p className="text-sm text-gray-500">사진을 찍어서 비슷한 코디를 찾아보세요</p>
       </div>
 
-      {/* 이미지 업로드 */}
-      <ImageUploader
-        onImageSelect={setSearchImage}
-        label="코디 사진 업로드"
-      />
+      <ImageUploader onImageSelect={setSearchImage} label="코디 사진 업로드" />
 
-      {/* 검색 버튼 */}
       <button
         onClick={handleSearch}
         disabled={!searchImage || loading}
         className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:bg-gray-400"
       >
         <IoSearchOutline className="text-lg" />
-        {loading ? "AI가 분석 중..." : "비슷한 코디 찾기"}
+        {loading ? "AI가 분석 중... (10~20초 소요)" : "비슷한 코디 찾기"}
       </button>
 
-      {/* 로딩 */}
+      {error && (
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-center text-sm text-red-600">
+          {error}
+        </div>
+      )}
+
       {loading && (
         <div className="space-y-4">
           {[1, 2].map((i) => (
@@ -78,45 +102,27 @@ export default function SearchPage() {
         </div>
       )}
 
-      {/* 검색 결과 */}
       {results && (
         <div className="space-y-4">
-          <h2 className="font-bold text-gray-900">비슷한 코디 {results.length}개</h2>
+          <h2 className="font-bold text-gray-900">분석 결과</h2>
           {results.map((result) => (
-            <div key={result.id} className="rounded-xl bg-white p-5 shadow-sm">
-              <div className="mb-2 flex items-start justify-between">
-                <h3 className="font-bold text-gray-900">{result.title}</h3>
-                <button className="text-xl text-gray-300 transition-colors hover:text-red-500">
-                  <IoHeartOutline />
-                </button>
-              </div>
-              <p className="mb-3 text-sm text-gray-600">{result.description}</p>
-              <div className="mb-3 space-y-1">
-                {result.items.map((item, idx) => (
-                  <div key={idx} className="flex items-center gap-2 text-sm text-gray-700">
-                    <span className="text-xs text-gray-400">{item.category}</span>
-                    <span>{item.name}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="flex flex-wrap gap-1">
-                {result.tags.map((tag) => (
-                  <span key={tag} className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs text-gray-600">
-                    #{tag}
-                  </span>
-                ))}
-              </div>
-            </div>
+            <OutfitCard
+              key={result.id}
+              id={result.id}
+              title={result.title}
+              description={result.description}
+              items={result.items}
+              tags={result.tags}
+            />
           ))}
         </div>
       )}
 
-      {/* 기본 안내 */}
-      {!results && !loading && (
+      {!results && !loading && !error && (
         <div className="rounded-xl border border-gray-100 bg-white p-6 text-center">
           <IoSearchOutline className="mx-auto mb-3 text-4xl text-gray-300" />
           <p className="text-sm text-gray-500">마음에 드는 코디 사진을 업로드하면</p>
-          <p className="text-sm text-gray-500">AI가 비슷한 조합을 찾아드려요</p>
+          <p className="text-sm text-gray-500">AI가 비슷한 상품을 찾아드려요</p>
         </div>
       )}
     </div>
