@@ -49,6 +49,7 @@ export default function OutfitCard({
     setLiked(newLiked);
     onLike?.(id, newLiked);
 
+    // 좋아요 저장
     if (newLiked) {
       try {
         await fetch("/api/favorites", {
@@ -58,7 +59,17 @@ export default function OutfitCard({
         });
       } catch {
         setLiked(false);
+        return;
       }
+    }
+
+    // 선호도 업데이트
+    if (tags.length > 0) {
+      fetch("/api/preferences", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tags, action: newLiked ? "like" : "dislike" }),
+      }).catch(() => {});
     }
   };
 

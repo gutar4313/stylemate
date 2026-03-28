@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { IoShirtOutline, IoHeart, IoTrashOutline } from "react-icons/io5";
+import { HiSparkles } from "react-icons/hi2";
+import OutfitCard from "@/components/OutfitCard";
 
 interface SavedOutfit {
   id: string;
@@ -15,6 +17,11 @@ interface SavedOutfit {
 export default function ClosetPage() {
   const [outfits, setOutfits] = useState<SavedOutfit[]>([]);
   const [loading, setLoading] = useState(true);
+  const [similarLoading, setSimilarLoading] = useState(false);
+  const [similarRecs, setSimilarRecs] = useState<Array<{
+    id: string; title: string; description: string;
+    items: Array<{ name: string; category: string }>; tags: string[];
+  }> | null>(null);
 
   useEffect(() => {
     fetchFavorites();
@@ -31,6 +38,23 @@ export default function ClosetPage() {
       // 로그인 안 된 경우 등
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSimilar = async () => {
+    setSimilarLoading(true);
+    try {
+      const res = await fetch("/api/recommend/similar");
+      if (res.ok) {
+        const data = await res.json();
+        setSimilarRecs(data.recommendations);
+      } else {
+        alert("비슷한 스타일을 가져오지 못했습니다.");
+      }
+    } catch {
+      alert("오류가 발생했습니다.");
+    } finally {
+      setSimilarLoading(false);
     }
   };
 
@@ -82,6 +106,36 @@ export default function ClosetPage() {
           </p>
         </div>
       ) : (
+        <>
+        {/* 비슷한 스타일 추천 버튼 */}
+        <button
+          onClick={handleSimilar}
+          disabled={similarLoading}
+          className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-violet-400 bg-violet-50 py-3 text-sm font-medium text-violet-700 transition-colors hover:bg-violet-100 disabled:opacity-50"
+        >
+          <HiSparkles />
+          {similarLoading ? "AI가 분석 중..." : "저장 코디 기반 비슷한 스타일 추천"}
+        </button>
+
+        {/* 비슷한 추천 결과 */}
+        {similarRecs && (
+          <div className="space-y-3">
+            <p className="text-sm font-medium text-gray-700">취향 기반 추천</p>
+            {similarRecs.map((rec) => (
+              <OutfitCard
+                key={rec.id}
+                id={rec.id}
+                title={rec.title}
+                description={rec.description}
+                items={rec.items}
+                tags={rec.tags}
+              />
+            ))}
+          </div>
+        )}
+        </>
+      )}
+      {outfits.length > 0 && (
         <div className="space-y-3">
           {outfits.map((outfit) => (
             <div key={outfit.id} className="rounded-xl bg-white p-4 shadow-sm">

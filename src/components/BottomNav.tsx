@@ -2,12 +2,17 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { IoHomeOutline, IoHome, IoSearchOutline, IoSearch, IoShirtOutline, IoShirt, IoPersonOutline, IoPerson } from "react-icons/io5";
-import { HiOutlineSparkles, HiSparkles } from "react-icons/hi2";
+import {
+  IoHomeOutline, IoHome,
+  IoSearchOutline, IoSearch,
+  IoShirtOutline, IoShirt,
+  IoPersonOutline, IoPerson,
+  IoTrendingUpOutline, IoTrendingUp,
+} from "react-icons/io5";
 
 const NAV_ITEMS = [
   { href: "/", label: "홈", icon: IoHomeOutline, activeIcon: IoHome },
-  { href: "/recommend", label: "추천", icon: HiOutlineSparkles, activeIcon: HiSparkles },
+  { href: "/trend", label: "트렌드", icon: IoTrendingUpOutline, activeIcon: IoTrendingUp },
   { href: "/search", label: "검색", icon: IoSearchOutline, activeIcon: IoSearch },
   { href: "/closet", label: "옷장", icon: IoShirtOutline, activeIcon: IoShirt },
   { href: "/profile", label: "프로필", icon: IoPersonOutline, activeIcon: IoPerson },
